@@ -107,7 +107,11 @@ class NominatimEnvironment:
 
         self.website_dir = tempfile.TemporaryDirectory()
         cfg = Configuration(None, self.src_dir / 'settings', environ=self.test_env)
-        refresh.setup_website(Path(self.website_dir.name) / 'website', self.src_dir / 'lib-php', cfg)
+        try:
+            conn = self.connect_database(dbname)
+        except:
+            conn = False
+        refresh.setup_website(Path(self.website_dir.name) / 'website', self.src_dir / 'lib-php', cfg, conn)
 
     def get_libpq_dsn(self):
         dsn = self.test_env['NOMINATIM_DATABASE_DSN']
@@ -190,7 +194,6 @@ class NominatimEnvironment:
             self.db_drop_database(self.api_test_db)
             raise
 
-
     def setup_unknown_db(self):
         """ Setup a test against a non-existing database.
         """
@@ -200,13 +203,13 @@ class NominatimEnvironment:
         """ Setup a test against a fresh, empty test database.
         """
         self.setup_template_db()
-        self.write_nominatim_config(self.test_db)
         conn = self.connect_database(self.template_db)
         conn.set_isolation_level(0)
         cur = conn.cursor()
         cur.execute('DROP DATABASE IF EXISTS {}'.format(self.test_db))
         cur.execute('CREATE DATABASE {} TEMPLATE = {}'.format(self.test_db, self.template_db))
         conn.close()
+        self.write_nominatim_config(self.test_db)
         context.db = self.connect_database(self.test_db)
         context.db.autocommit = True
         psycopg2.extras.register_hstore(context.db, globally=False)

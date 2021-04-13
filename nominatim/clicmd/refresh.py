@@ -85,6 +85,7 @@ class UpdateRefresh:
         if args.website:
             webdir = args.project_dir / 'website'
             LOG.warning('Setting up website directory at %s', webdir)
-            refresh.setup_website(webdir, args.phplib_dir, args.config)
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.setup_website(webdir, args.phplib_dir, args.config, conn)
 
         return 0

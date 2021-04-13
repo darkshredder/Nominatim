@@ -135,7 +135,8 @@ class SetupAll:
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)
-        refresh.setup_website(webdir, args.phplib_dir, args.config)
+        with connect(args.config.get_libpq_dsn()) as conn:
+            refresh.setup_website(webdir, args.phplib_dir, args.config, conn)
 
         with connect(args.config.get_libpq_dsn()) as conn:
             try:
